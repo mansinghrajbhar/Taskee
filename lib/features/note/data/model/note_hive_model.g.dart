@@ -20,19 +20,31 @@ class NoteHiveModelAdapter extends TypeAdapter<NoteHiveModel> {
       id: fields[0] as int,
       note: fields[1] as String,
       createdAt: fields[2] as DateTime,
+      title: fields[3] as String? ?? 'Untitled',
+      parentId: fields[4] as int?,
+      isFolder: fields[5] as bool? ?? false,
+      isFavorite: fields[6] as bool? ?? false,
     );
   }
 
   @override
   void write(BinaryWriter writer, NoteHiveModel obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.note)
       ..writeByte(2)
-      ..write(obj.createdAt);
+      ..write(obj.createdAt)
+      ..writeByte(3)
+      ..write(obj.title)
+      ..writeByte(4)
+      ..write(obj.parentId)
+      ..writeByte(5)
+      ..write(obj.isFolder)
+      ..writeByte(6)
+      ..write(obj.isFavorite);
   }
 
   @override

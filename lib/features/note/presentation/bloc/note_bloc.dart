@@ -25,41 +25,55 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
     on<NoteItemDeletedEvent>(_onItemDeleted);
   }
 
+  void _emitLoaded(Emitter<NoteState> emit) {
+    final notes = getAllNotes();
+    emit(NoteLoadedState(NoteListModel(noteList: notes)));
+  }
+
   void _onStarted(NoteStartedEvent event, Emitter<NoteState> emit) {
-    emit(NoteLoadingState());
     try {
-      final noteList = getAllNotes();
-      emit(NoteLoadedState(NoteListModel(noteList: noteList)));
+      _emitLoaded(emit);
     } catch (_) {
       emit(const NoteErrorState());
     }
   }
 
-  void _onItemAdded(NoteItemAddedEvent event, Emitter<NoteState> emit) {
-    emit(NoteLoadingState());
+  Future<void> _onItemAdded(
+    NoteItemAddedEvent event,
+    Emitter<NoteState> emit,
+  ) async {
     try {
-      addNote(event.note);
-      add(NoteStartedEvent());
+      await addNote(event.note);
+      _emitLoaded(emit);
     } catch (_) {
       emit(const NoteErrorState());
     }
   }
 
-  void _onItemUpdated(NoteItemUpdatedEvent event, Emitter<NoteState> emit) {
-    emit(NoteLoadingState());
+  Future<void> _onItemUpdated(
+    NoteItemUpdatedEvent event,
+    Emitter<NoteState> emit,
+  ) async {
     try {
-      updateNote(event.note);
-      add(NoteStartedEvent());
+      await updateNote(event.note);
+      _emitLoaded(emit);
     } catch (_) {
       emit(const NoteErrorState());
     }
   }
 
-  void _onItemDeleted(NoteItemDeletedEvent event, Emitter<NoteState> emit) {
-    emit(NoteLoadingState());
+  Future<void> _onItemDeleted(
+    NoteItemDeletedEvent event,
+    Emitter<NoteState> emit,
+  ) async {
     try {
-      deleteNote(event.id);
-      add(NoteStartedEvent());
+      final all = getAllNotes();
+      final children = all.where((item) => item.parentId == event.id).toList();
+      for (final child in children) {
+        await deleteNote(child.id);
+      }
+      await deleteNote(event.id);
+      _emitLoaded(emit);
     } catch (_) {
       emit(const NoteErrorState());
     }

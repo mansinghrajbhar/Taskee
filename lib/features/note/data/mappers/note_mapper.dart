@@ -2,13 +2,25 @@ import 'package:taskee/features/note/data/model/note_hive_model.dart';
 import 'package:taskee/features/note/domain/entities/note.dart';
 
 extension NoteHiveModelToDomain on NoteHiveModel {
-  Note toDomain() {
-    return Note(id: id, note: note, createdAt: DateTime.now());
-  }
+  Note toDomain() => Note(
+    id: id,
+    title: title,
+    note: note,
+    createdAt: createdAt,
+    parentId: parentId,
+    isFolder: isFolder,
+    isFavorite: isFavorite,
+  );
 }
 
 extension NoteDomainToHiveModel on Note {
-  NoteHiveModel toHiveModel() {
-    return NoteHiveModel(id: id, note: note, createdAt: createdAt);
-  }
+  NoteHiveModel toHiveModel() => NoteHiveModel(
+    id: id,
+    title: title,
+    note: note,
+    createdAt: createdAt,
+    parentId: parentId,
+    isFolder: isFolder,
+    isFavorite: isFavorite,
+  );
 }

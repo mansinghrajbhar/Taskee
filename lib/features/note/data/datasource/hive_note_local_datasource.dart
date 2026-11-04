@@ -3,16 +3,17 @@ import 'package:taskee/features/note/data/datasource/note_local_datasource.dart'
 import 'package:taskee/features/note/data/model/note_hive_model.dart';
 
 const String _noteBoxName = 'noteBox';
-const String _latestIdBoxName = "noteLatestIdBox";
-const String _latestIdName = "_latestId";
+const String _latestIdBoxName = 'noteLatestIdBox';
+const String _latestIdName = '_latestId';
 
 class HiveNoteLocalDatasource implements NoteLocalDatasource {
   late final Box<NoteHiveModel> _noteBox;
   late final Box<int> _lastIdBox;
 
   Future<void> initialize() async {
-    Hive.registerAdapter(NoteHiveModelAdapter());
-
+    if (!Hive.isAdapterRegistered(2)) {
+      Hive.registerAdapter(NoteHiveModelAdapter());
+    }
     _noteBox = await Hive.openBox<NoteHiveModel>(_noteBoxName);
     _lastIdBox = await Hive.openBox<int>(_latestIdBoxName);
   }
@@ -23,19 +24,23 @@ class HiveNoteLocalDatasource implements NoteLocalDatasource {
   @override
   Future<void> save(NoteHiveModel note) async {
     final latestId = _lastIdBox.get(_latestIdName, defaultValue: 0) ?? 0;
-    final newLatestId = latestId + 1;
+    final id = note.id > 0 ? note.id : latestId + 1;
     final entity = NoteHiveModel(
-      id: newLatestId,
+      id: id,
       note: note.note,
       createdAt: note.createdAt,
+      title: note.title,
+      parentId: note.parentId,
+      isFolder: note.isFolder,
+      isFavorite: note.isFavorite,
     );
-
-    await _noteBox.put(entity.id, entity);
-    await _lastIdBox.put(_latestIdName, newLatestId);
+    await _noteBox.put(id, entity);
+    if (id > latestId) await _lastIdBox.put(_latestIdName, id);
   }
 
   @override
   Future<void> update(int id, NoteHiveModel note) => _noteBox.put(id, note);
+
   @override
   Future<void> delete(int id) => _noteBox.delete(id);
 }

@@ -6,6 +6,7 @@ import 'package:taskee/app/theme/app_colors.dart';
 import 'package:taskee/features/note/domain/entities/note.dart';
 import 'package:taskee/features/note/presentation/bloc/note_bloc.dart';
 import 'package:taskee/features/note/presentation/bloc/note_event.dart';
+import 'package:taskee/features/note/presentation/bloc/note_state.dart';
 
 class NoteEditorScreen extends StatefulWidget {
   final Note? note;
@@ -268,6 +269,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                   ),
                   const SizedBox(height: 12),
                   ...List.generate(_blocks.length, _blockEditor),
+                  if (widget.note != null) _subpagesSection(),
                   const SizedBox(height: 90),
                 ],
               ),
@@ -299,6 +301,55 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _subpagesSection() {
+    return BlocBuilder<NoteBloc, NoteState>(
+      builder: (context, state) {
+        if (state is! NoteLoadedState || widget.note == null) {
+          return const SizedBox.shrink();
+        }
+        final children = state.noteModel.noteList
+            .where((item) => item.parentId == widget.note!.id && !item.isFolder)
+            .toList();
+        return Padding(
+          padding: const EdgeInsets.only(top: 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text('Subpages', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  ),
+                  TextButton.icon(
+                    onPressed: _createSubpage,
+                    icon: const Icon(Icons.add, size: 17),
+                    label: const Text('Add'),
+                  ),
+                ],
+              ),
+              if (children.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text('No subpages yet', style: TextStyle(color: AppColors.textMuted)),
+                )
+              else
+                ...children.map((child) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.article_outlined, color: AppColors.accent),
+                  title: Text(child.title),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => NoteEditorScreen(note: child)),
+                  ),
+                )),
+            ],
+          ),
+        );
+      },
     );
   }
 
